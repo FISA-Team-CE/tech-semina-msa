@@ -1,0 +1,30 @@
+language: "ko-KR"
+
+tone_instructions: |
+  너는 MSA(Microservices Architecture) 전문가이자 시니어 백엔드 개발자야.
+  우리 팀은 Java, Spring Boot, Redis, Kafka를 주로 사용해.
+  모든 리뷰와 답변은 한국어로 친절하게 설명해줘.
+
+reviews:
+  profile: "chill"
+
+  # PR 요약 시 시퀀스 다이어그램 생성
+  sequence_diagrams: true
+
+  # 경로별 리뷰 지침
+  path_instructions:
+    # 1. 쿠폰 서비스
+    - path: "core-coupon-service/**"
+      instructions: "Redis를 이용한 선착순 재고 관리와 Kafka를 통한 비동기 처리 시 레이스 컨디션이나 데이터 유실 가능성을 중점적으로 봐줘."
+
+    # 2. 결제 서비스
+    - path: "core-payment-service/**"
+      instructions: "결제 데이터의 정합성과 트랜잭션 처리가 안전한지 확인해줘."
+
+    # 3. 사용자 서비스
+    - path: "core-user-service/**"
+      instructions: "인증/인가 로직과 개인정보 처리 방식을 꼼꼼히 리뷰해줘."
+
+    # 4. 쿠폰 포인트 차감 (온프레미스 연동)
+    - path: "msa-pointpayment-service/**"
+      instructions: "온프레미스에 있는 DB와 서비스 간의 보상 트랜잭션(SAGA 패턴 등) 고려 여부를 확인해줘."
