@@ -1,0 +1,56 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: coupon-service-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coupon-service
+  
+  # Pod 개수 범위
+  minReplicas: 2   # 최소 2개 (고가용성)
+  maxReplicas: 10  # 최대 10개 (워커노드 2대 고려)
+  
+  # 스케일링 기준
+  metrics:
+  # CPU 사용률 기준
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # CPU 70% 이상이면 스케일 아웃
+  
+  # 메모리 사용률 기준
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # 메모리 80% 이상이면 스케일 아웃
+  
+  # 스케일링 동작 정책
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0  # 즉시 스케일 아웃
+      policies:
+      - type: Percent
+        value: 100  # 한번에 100% (2배) 증가 가능
+        periodSeconds: 15
+      - type: Pods
+        value: 2    # 또는 한번에 최대 2개 Pod 증가
+        periodSeconds: 15
+      selectPolicy: Max  # 위 정책 중 더 빠른 것 선택
+    
+    scaleDown:
+      stabilizationWindowSeconds: 300  # 5분 동안 안정화 후 스케일 인
+      policies:
+      - type: Percent
+        value: 50   # 한번에 50% 감소
+        periodSeconds: 60
+      - type: Pods
+        value: 1    # 또는 한번에 최대 1개 Pod 감소
+        periodSeconds: 60
+      selectPolicy: Min  # 위 정책 중 더 느린 것 선택 (급격한 감소 방지)

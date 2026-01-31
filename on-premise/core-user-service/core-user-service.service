@@ -1,0 +1,32 @@
+# /etc/systemd/system/core-user-service.service
+[Unit]
+Description=Core User Service (On-Premise)
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/core-user-service
+
+# JAR 파일 실행
+ExecStart=/usr/bin/java -jar \
+    -Xms512m \
+    -Xmx1024m \
+    -Dspring.profiles.active=prod \
+    /opt/core-user-service/core-user-service.jar
+
+# Graceful Shutdown
+SuccessExitStatus=143
+TimeoutStopSec=30
+
+# 자동 재시작 설정
+Restart=on-failure
+RestartSec=10
+
+# 로그 설정
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=core-user-service
+
+[Install]
+WantedBy=multi-user.target
