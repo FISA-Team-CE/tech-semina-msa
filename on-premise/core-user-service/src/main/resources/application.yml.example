@@ -1,0 +1,35 @@
+# User Service Configuration Template
+# 실제 사용시 이 파일을 application.yml로 복사하고 값을 수정하세요
+
+spring:
+  application:
+    name: core-user-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bank_user_db
+    username: your_username
+    password: your_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
+    consumer:
+      group-id: core-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+server:
+  port: 8080
+
+encrypt:
+  secret-key: ${ENCRYPT_SECRET_KEY:MySecretKey1234567890123456789012}

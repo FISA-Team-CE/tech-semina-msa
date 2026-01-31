@@ -1,0 +1,9 @@
+rootProject.name = 'tech-semina-msa'
+
+// On-Premise Services
+include 'on-premise:core-user-service'
+include 'on-premise:core-payment-service'
+
+// Cloud MSA Services
+include 'cloud-services:msa-coupon-service'
+

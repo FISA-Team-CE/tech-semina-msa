@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coupon-service
+  namespace: default
+  labels:
+    app: coupon-service
+    version: v1
+spec:
+  # 초기 레플리카 수 (HPA가 자동으로 조절)
+  replicas: 2
+  
+  # 무중단 배포 전략
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # 배포 중 추가로 생성 가능한 Pod 수
+      maxUnavailable: 0  # 배포 중 사용 불가능한 Pod 수 (0 = 무중단)
+  
+  selector:
+    matchLabels:
+      app: coupon-service
+  
+  template:
+    metadata:
+      labels:
+        app: coupon-service
+        version: v1
+    spec:
+      # 워커 노드에만 배포 (마스터 노드 제외)
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: DoesNotExist
+      
+      containers:
+      - name: coupon-service
+        # TODO: 실제 Docker 이미지 경로로 변경 (ECR, Docker Hub 등)
+        image: your-registry/coupon-service:latest
+        imagePullPolicy: Always
+        
+        ports:
+        - name: http
+          containerPort: 8082
+          protocol: TCP
+        
+        # 환경 변수 (외부 인프라 연결 정보)
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        
+        # Redis 연결 정보
+        - name: REDIS_HOST
+          value: "your-redis-host"  # TODO: 실제 Redis EC2 IP 또는 도메인
+        
+        # Kafka 연결 정보
+        - name: KAFKA_HOST
+          value: "your-kafka-host"  # TODO: 실제 Kafka EC2 IP 또는 도메인
+        
+        # MySQL 연결 정보
+        - name: DB_HOST
+          value: "your-mysql-host"  # TODO: 실제 MySQL 호스트
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: username
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        
+        # 리소스 제한 (HPA 기준)
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        
+        # 헬스체크 (무중단 배포의 핵심)
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8082
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8082
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Graceful Shutdown (무중단 배포)
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]
+      
+      # Graceful Shutdown 시간
+      terminationGracePeriodSeconds: 30
