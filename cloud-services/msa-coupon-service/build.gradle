@@ -30,6 +30,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.kafka:spring-kafka'
+	
+	// Prometheus 메트릭 (모니터링)
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+	
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'

@@ -40,7 +40,7 @@ services:
     image: mysql:8.0
     container_name: local-mysql
     ports:
-      - "3307:3306"  # 외부 포트를 3307로 변경
+      - "3307:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=password
       - MYSQL_DATABASE=coupon_db
@@ -73,6 +73,70 @@ services:
       - oracle-data:/opt/oracle/oradata
     shm_size: 1gb
 
+  # ========================================
+  # 모니터링 스택
+  # ========================================
+
+  # 7. Prometheus (메트릭 수집 및 저장)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: local-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  # 8. Grafana (시각화 대시보드)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: local-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+
+  # 9. Redis Exporter (Redis 메트릭 수집)
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: local-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+
+  # 10. Node Exporter (시스템 메트릭 수집)
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: local-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
 volumes:
   postgres-data:
   oracle-data:
+  prometheus-data:
+  grafana-data:
