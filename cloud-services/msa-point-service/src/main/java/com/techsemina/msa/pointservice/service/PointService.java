@@ -27,8 +27,8 @@ public class PointService {
      */
     public PointMaster chargePoint(String userUuid, long amount) {
         // 1. 유저 조회 (없으면 새로 생성 - 0원으로 초기화)
-        PointMaster pointMaster = pointRepository.findByUserUuid(userUuid)
-                .orElse(new PointMaster(userUuid, 0));
+        PointMaster pointMaster = pointRepository.findByUserUuidWithLock(userUuid)
+                .orElseGet(() -> pointRepository.save(new PointMaster(userUuid, 0)));
 
         // 2. 금액 합산 (Entity 메서드 사용)
         pointMaster.charge(amount);
