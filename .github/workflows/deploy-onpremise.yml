@@ -37,7 +37,8 @@ jobs:
       - name: Deploy JAR
         run: |
           SERVICE_NAME="core-user-service"
-          JAR_FILE=$(ls on-premise/core-user-service/build/libs/*.jar | head -n 1)
+          # plain.jar 제외, 실행 가능한 JAR만 선택
+          JAR_FILE=$(ls on-premise/core-user-service/build/libs/*.jar | grep -v plain | head -n 1)
           
           echo "Deploying ${JAR_FILE}..."
           sudo cp ${JAR_FILE} /opt/${SERVICE_NAME}/${SERVICE_NAME}.jar
@@ -80,7 +81,8 @@ jobs:
       - name: Deploy JAR
         run: |
           SERVICE_NAME="core-payment-service"
-          JAR_FILE=$(ls on-premise/core-payment-service/build/libs/*.jar | head -n 1)
+          # plain.jar 제외, 실행 가능한 JAR만 선택
+          JAR_FILE=$(ls on-premise/core-payment-service/build/libs/*.jar | grep -v plain | head -n 1)
           
           echo "Deploying ${JAR_FILE}..."
           sudo cp ${JAR_FILE} /opt/${SERVICE_NAME}/${SERVICE_NAME}.jar
