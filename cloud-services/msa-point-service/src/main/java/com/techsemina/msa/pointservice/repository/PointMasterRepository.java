@@ -13,23 +13,18 @@ import java.util.Optional;
 public interface PointMasterRepository extends JpaRepository<PointMaster, Long> {
 
     /**
- * Retrieve the PointMaster for the given user UUID without acquiring any database lock.
- *
- * @param userUuid the user's UUID used to look up the PointMaster
- * @return an Optional containing the PointMaster if found, empty otherwise
- */
+     * 단순 조회용 (락 없음)
+     * - 잔액 확인할 때 사용 (로그인 후 메인화면 등)
+     */
     Optional<PointMaster> findByUserUuid(String userUuid);
 
     /**
-     * Fetches the PointMaster for the given userUuid while acquiring a pessimistic write lock to prevent concurrent modifications.
-     *
-     * The query waits up to 3 seconds to obtain the lock; if the lock cannot be acquired within that timeout an error is raised.
-     *
-     * @param userUuid the UUID of the user whose PointMaster is requested
-     * @return an Optional containing the PointMaster for the user if found, otherwise an empty Optional
+     * 🔥 [핵심 수정] 결제/차감용 (비관적 락 적용)
+     * - "내가 수정하는 동안 아무도 건드리지 마!" (SELECT ... FOR UPDATE)
+     * - 동시성 문제 해결의 핵심입니다.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")}) // 3초 대기 후 에러
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")}) // 3초 대기 후 에러
     @Query("select p from PointMaster p where p.userUuid = :userUuid") // 👈 직접 쿼리 명시
     Optional<PointMaster> findByUserUuidWithLock(String userUuid);
     // (JPA가 메서드 이름을 분석할 때 'AndLock'은 무시하므로 기능은 똑같이 동작하고 락만 걸립니다)

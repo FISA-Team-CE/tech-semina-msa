@@ -26,38 +26,28 @@ public class PointMaster {
     private LocalDateTime lastUpdatedAt;
 
 
-    /**
-     * Creates a new PointMaster for the given user with the specified initial point balance and sets the last-updated timestamp to now.
-     *
-     * @param userUuid the unique identifier of the user
-     * @param currentAmt the initial point balance
-     */
+    // 생성자 (새 유저용)
     public PointMaster(String userUuid, long currentAmt) {
         this.userUuid = userUuid;
         this.currentAmt = currentAmt;
         this.lastUpdatedAt = LocalDateTime.now();
     }
 
-    /**
-     * Increases the current point balance by the specified amount.
-     *
-     * Also updates {@code lastUpdatedAt} to the current date and time.
-     *
-     * @param amount the amount of points to add to the current balance
-     */
+    // [로직 1] 포인트 충전 (합산)
     public void charge(long amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
+        }
         this.currentAmt += amount;
         this.lastUpdatedAt = LocalDateTime.now();
     }
 
 
-    /**
-     * Deducts the specified number of points from this entity's balance and updates the last-updated timestamp.
-     *
-     * @param amount the number of points to deduct
-     * @throws IllegalStateException if the current balance is less than {@code amount}
-     */
+    // [로직 2] 포인트 차감
     public void use(long amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("차감 금액은 0보다 커야 합니다.");
+        }
         if (this.currentAmt < amount) {
             throw new IllegalStateException("포인트 잔액이 부족합니다.");
         }
@@ -65,12 +55,11 @@ public class PointMaster {
         this.lastUpdatedAt = LocalDateTime.now();
     }
 
-    /**
-     * Adds the specified amount of points back to the current balance and updates the last-updated timestamp.
-     *
-     * @param amount the number of points to refund to the balance
-     */
+    // [로직 3] 포인트 롤백(환불)
     public void refund(long amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("환불 금액은 0보다 커야 합니다.");
+        }
         this.currentAmt += amount;
         this.lastUpdatedAt = LocalDateTime.now();
     }

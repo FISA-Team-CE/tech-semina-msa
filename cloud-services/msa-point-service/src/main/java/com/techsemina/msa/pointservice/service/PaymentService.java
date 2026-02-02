@@ -17,15 +17,6 @@ public class PaymentService {
     private final PointService pointService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    /**
-     * Processes a hybrid payment by deducting points locally and sending an asynchronous cash withdrawal request.
-     *
-     * Performs a local point deduction within the current transaction and then publishes a cash withdrawal request
-     * to the "core-withdraw-request" Kafka topic; the withdrawal outcome is handled asynchronously and is not rolled back
-     * as part of the local transaction.
-     *
-     * @param request payment details containing the user's login ID, point amount to deduct, and cash amount to withdraw
-     */
     @Transactional // 포인트 차감 중 에러나면 자동 롤백 보장
     public void processCompositePayment(PaymentRequest request) {
         log.info("=== 1. 복합 결제 시작 (Hybrid): User={} ===", request.getLoginId());

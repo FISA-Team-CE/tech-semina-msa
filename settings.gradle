@@ -6,4 +6,4 @@ include 'on-premise:core-payment-service'
 
 // Cloud MSA Services
 include 'cloud-services:msa-coupon-service'
-
+include 'cloud-services:msa-point-service'

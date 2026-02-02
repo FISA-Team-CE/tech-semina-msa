@@ -18,12 +18,7 @@ public class MockCoreBanking {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final Random random = new Random();
 
-    /**
-     * Consumes a core withdraw request from Kafka, simulates bank processing with a short delay, determines success or failure randomly, and publishes a CoreResultEvent containing the request's loginId and resulting status.
-     *
-     * @param request the withdrawal request containing the user's loginId and the requested amount (in KRW)
-     * @throws InterruptedException if the simulated processing delay is interrupted
-     */
+    // 👂 결제 서비스가 보낸 "출금 요청"을 가로챕니다.
     @KafkaListener(topics = "core-withdraw-request", groupId = "mock-core-group")
     public void handleWithdrawRequest(CashRequestDTO request) throws InterruptedException {
         log.info("============== [On-Premise 시뮬레이터] ==============");
