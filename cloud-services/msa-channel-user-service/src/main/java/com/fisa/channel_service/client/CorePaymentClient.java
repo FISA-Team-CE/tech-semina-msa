@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.math.BigDecimal;
 
 // Core-Payment 호출 (On-Premise)
-@FeignClient(name = "core-payment-service", url = "http://localhost:8081")
+@FeignClient(name = "core-payment-service", url = "${core.payment.url}")
 public interface CorePaymentClient {
 
     // 계좌 개설
