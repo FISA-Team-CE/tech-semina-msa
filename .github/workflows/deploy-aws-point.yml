@@ -50,5 +50,5 @@ jobs:
           username: ubuntu
           key: ${{ secrets.K8S_MASTER_KEY }}
           script: |
-            kubectl set image deployment/msa-point-service msa-point=${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} -n ${{ env.NAMESPACE }}
+            kubectl set image deployment/msa-point-service msa-point-service=${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} -n ${{ env.NAMESPACE }}
             kubectl rollout status deployment/msa-point-service -n ${{ env.NAMESPACE }} --timeout=120s || (kubectl rollout undo deployment/msa-point-service -n ${{ env.NAMESPACE }} && exit 1)
