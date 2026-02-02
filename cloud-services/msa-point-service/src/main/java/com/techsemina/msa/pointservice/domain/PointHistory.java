@@ -28,13 +28,6 @@ public class PointHistory {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    /**
-     * Create a PointHistory with the specified point ID, transaction type, and amount; sets the creation timestamp to now.
-     *
-     * @param pointId the identifier of the related point
-     * @param txType  the transaction type (e.g., "CHARGE", "USE", "ROLLBACK")
-     * @param amount  the amount involved in the transaction
-     */
     @Builder
     public PointHistory(Long pointId, String txType, Long amount) {
         this.pointId = pointId;

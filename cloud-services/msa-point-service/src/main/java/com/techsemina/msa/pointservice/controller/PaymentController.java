@@ -20,15 +20,6 @@ public class PaymentController {
     private final PaymentService paymentService;
 
 
-    /**
-     * Handle a payment request and initiate composite payment processing.
-     *
-     * Delegates processing of the provided payment request to the payment service
-     * and returns a confirmation message.
-     *
-     * @param dto the payment request payload containing necessary payment details
-     * @return the confirmation message "결제 요청 처리 완료"
-     */
     @PostMapping("/payment")
     public String pay(@RequestBody PaymentRequest dto) {
         paymentService.processCompositePayment(dto);

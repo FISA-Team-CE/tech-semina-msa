@@ -17,12 +17,7 @@ public class PointController {
 
     private final PointService pointService;
 
-    /**
-     * Charge a user's account with the specified point amount.
-     *
-     * @param dto request body containing the user's loginId and the pointAmount to add
-     * @return the updated PointMaster wrapped in a ResponseEntity
-     */
+    // [기능] 포인트 충전 API
     @PostMapping("/charge")
     public ResponseEntity<PointMaster> charge(@RequestBody PointRequestDTO dto) {
 
