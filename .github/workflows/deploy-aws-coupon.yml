@@ -51,6 +51,8 @@ jobs:
           host: ${{ secrets.K8S_MASTER_IP }}
           username: ubuntu
           key: ${{ secrets.K8S_MASTER_KEY }}
+          timeout: 60s
+          command_timeout: 30m
           script: |
             kubectl set image deployment/coupon-service coupon-service=${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} -n ${{ env.NAMESPACE }}
             kubectl rollout status deployment/coupon-service -n ${{ env.NAMESPACE }} --timeout=120s || (kubectl rollout undo deployment/coupon-service -n ${{ env.NAMESPACE }} && exit 1)
