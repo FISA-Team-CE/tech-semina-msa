@@ -77,7 +77,7 @@ public class PointService {
      */
     public void refund(String userId, Long amount) {
         PointMaster wallet = pointRepository.findByUserUuidWithLock(userId)
-                .orElseThrow(() -> new RuntimeException("지갑 없음"));
+                .orElseThrow(() -> new RuntimeException("사용자의 포인트 지갑을 찾을 수 없습니다."));
 
         // 1. 다시 돈 채워주기 (refund 메서드가 없다면 charge 사용 가능)
         // Entity에 refund 메서드가 없다면 charge(amount)와 로직이 같습니다.
