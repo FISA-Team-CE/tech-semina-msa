@@ -14,15 +14,18 @@ COPY src ./src
 RUN gradle clean build -x test --no-daemon
 
 # Runtime stage
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Copy the built JAR from builder stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Create non-root user for security
-RUN addgroup --system spring && adduser --system --group spring
+# Create non-root user for security (Alpine syntax)
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 # Expose port
