@@ -39,7 +39,7 @@ spec:
       containers:
       - name: event-coupon-service
         # CI/CD에서 자동으로 이미지 태그가 업데이트됩니다
-        image: DOCKER_USERNAME_PLACEHOLDER/msa-coupon-service:latest
+        image: juyeon09/msa-coupon-service:latest
         imagePullPolicy: Always
 
         ports:
@@ -52,28 +52,30 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
 
-        # Redis 연결 정보
+        # Redis 연결 정보 (db 네임스페이스에 있음)
         - name: REDIS_HOST
-          value: "redis-service"  # K8s 내부 서비스명 또는 실제 IP
-
-        # Kafka 연결 정보
-        - name: KAFKA_HOST
-          value: "kafka-service"  # K8s 내부 서비스명 또는 실제 IP
-
-        # MySQL 연결 정보
-        - name: DB_HOST
-          value: "mysql-service"  # K8s 내부 서비스명 또는 실제 IP
-        - name: DB_USER
+          value: "redis-service.db.svc.cluster.local"
+        - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-secret
-              key: username
+              name: redis-secret
+              key: REDIS_PASSWORD
               optional: true
+
+        # Kafka 연결 정보 (외부 EC2)
+        - name: KAFKA_HOST
+          value: "13.55.55.72"
+
+        # MySQL 연결 정보 (db 네임스페이스에 있음)
+        - name: DB_HOST
+          value: "mysql-service.db.svc.cluster.local"
+        - name: DB_USER
+          value: "root"
         - name: DB_PASS
           valueFrom:
             secretKeyRef:
-              name: db-secret
-              key: password
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
               optional: true
         
         # 리소스 제한 (HPA 기준)
