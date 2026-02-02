@@ -18,27 +18,28 @@ public class KafkaConsumerService {
     private final CouponManageService couponService;
     private final ObjectMapper objectMapper;
 
-    //  입금 처리
+    // 1. 입금 처리
     @KafkaListener(topics = "bank_deposit", groupId = "core-group")
     public void consumeDeposit(String message) {
         try {
-
             DepositMessage depositDto = objectMapper.readValue(message, DepositMessage.class);
 
             paymentService.deposit(
-                    depositDto.getUserUuid(),      // 사용자 ID (String)
-                    depositDto.getAccountNumber(), // 계좌번호 (String)
-                    depositDto.getAmount()         // 금액 (BigDecimal)
+                    depositDto.getAccountNo(),
+                    depositDto.getUserUuid(),
+                    depositDto.getAmount()
             );
 
             log.info("💰 [Core] 입금 처리 완료: {}", depositDto);
 
         } catch (JsonProcessingException e) {
             log.error("❌ JSON 파싱 에러: {}", message, e);
+        } catch (Exception e) {
+            log.error("❌ 입금 처리 중 에러: {}", e.getMessage());
         }
     }
 
-    // 쿠폰 발급 처리
+    // 2. 쿠폰 처리
     @KafkaListener(topics = "coupon_issue", groupId = "core-group")
     public void consumeCouponIssue(String message) {
         try {
