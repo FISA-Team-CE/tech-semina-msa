@@ -8,6 +8,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 public class PointServiceApplication {
 
+    /**
+     * Application entry point that launches the Point Service Spring Boot application.
+     */
     public static void main(String[] args) {
 
         SpringApplication.run(PointServiceApplication.class, args);

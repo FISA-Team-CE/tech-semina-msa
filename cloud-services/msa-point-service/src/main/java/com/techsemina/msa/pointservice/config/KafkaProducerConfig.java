@@ -15,6 +15,14 @@ import java.util.Map;
 @Configuration
 public class KafkaProducerConfig {
 
+    /**
+     * Creates a ProducerFactory<String, Object> configured for a local Kafka broker and JSON value serialization.
+     *
+     * <p>The factory is configured with bootstrap server "localhost:9092", a String key serializer,
+     * and a Jackson JSON value serializer.</p>
+     *
+     * @return a ProducerFactory configured to produce String keys and JSON-serialized Object values
+     */
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -29,6 +37,11 @@ public class KafkaProducerConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
+    /**
+     * Provides a KafkaTemplate wired with the configured ProducerFactory for sending messages to Kafka.
+     *
+     * @return a KafkaTemplate configured with the application's ProducerFactory
+     */
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());

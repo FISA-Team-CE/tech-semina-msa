@@ -20,10 +20,13 @@ public class PointService {
     private final PointHistoryRepository pointHistoryRepository;
 
     /**
-     * [기능 1] 포인트 적립 (Upsert)
-     * - 이미 있는 유저면? -> 기존 금액 + 충전 금액 (오류 안 남!)
-     * - 없는 유저면? -> 새로 생성
-     * - 그리고 히스토리에 기록!
+     * Upserts a user's point balance by adding the specified amount and records a CHARGE history entry.
+     *
+     * If no PointMaster exists for the given userUuid, a new one is created with a zero balance before applying the charge.
+     *
+     * @param userUuid the UUID of the user whose points will be charged
+     * @param amount the amount of points to add to the user's balance
+     * @return the persisted PointMaster reflecting the updated balance
      */
     public PointMaster chargePoint(String userUuid, long amount) {
         // 1. 유저 조회 (없으면 새로 생성 - 0원으로 초기화)
@@ -45,10 +48,13 @@ public class PointService {
     }
 
     /**
-     * [기능 2] 포인트 사용 (결제)
-     * - 비관적 락(Lock)을 걸어서 동시성 이슈 방지
-     * - 잔액 체크 후 차감
-     * - 히스토리 저장 추가
+     * Deducts points from a user's wallet with a pessimistic lock and records a usage history entry.
+     *
+     * Acquires a database lock on the user's PointMaster, verifies sufficient balance, subtracts the specified amount, and persists a corresponding PointHistory record.
+     *
+     * @param userId the UUID of the user whose points will be deducted
+     * @param amount the amount of points to deduct
+     * @throws RuntimeException if the user's wallet cannot be found or if the wallet's balance is less than {@code amount}
      */
     public void usePoint(String userId, Long amount) {
         // 1. 내 지갑 찾기 (Lock 사용)
@@ -71,9 +77,13 @@ public class PointService {
     }
 
     /**
-     * [기능 3] 보상 트랜잭션 (포인트 환불/롤백)
-     * - 온프레미스(은행) 쪽에서 에러났을 때 호출됨
-     * - 히스토리 저장 추가
+     * Refunds (rolls back) points to a user's wallet and records a REFUND history entry.
+     *
+     * Increases the user's point balance by the given amount and persists a corresponding history record.
+     *
+     * @param userId the user's UUID whose wallet will be refunded
+     * @param amount the amount of points to refund (must be positive)
+     * @throws RuntimeException if the user's wallet is not found
      */
     public void refund(String userId, Long amount) {
         PointMaster wallet = pointRepository.findByUserUuid(userId)
@@ -90,7 +100,16 @@ public class PointService {
         log.info("↩️ 포인트 환불(롤백) 완료: 사용자={}, 환불액={}", userId, amount);
     }
 
-    // [내부 메서드] 히스토리 저장 로직 공통화 (중복 제거)
+    /**
+     * Persist a point transaction record for the given PointMaster.
+     *
+     * Creates and saves a PointHistory entry that records the pointId from the provided
+     * master, the amount, the transaction type, and the current timestamp.
+     *
+     * @param master the PointMaster whose pointId will be recorded in history
+     * @param amount the amount of points for the transaction
+     * @param type   the transaction type (e.g., "CHARGE", "USE", "REFUND")
+     */
     private void saveHistory(PointMaster master, Long amount, String type) {
         PointHistory history = PointHistory.builder()
                 .pointId(master.getPointId())
