@@ -14,7 +14,14 @@ public class PaymentKafkaConsumer {
 
     private final PointService pointService; // 직접 주입
 
-    // 온프레미스(코어뱅킹)의 응답을 듣는 리스너
+    /**
+     * Processes core banking (on-premises) result events and performs compensation when a withdrawal fails.
+     *
+     * If the event's status is "SUCCESS" the method logs final payment success; otherwise it attempts a point
+     * refund for the event's user and logs the outcome.
+     *
+     * @param event the core result event containing at least the userId and status
+     */
     @KafkaListener(topics = "core-result", groupId = "payment-group")
     public void handleCoreResult(CoreResultEvent event) {
         if ("SUCCESS".equals(event.getStatus())) {
