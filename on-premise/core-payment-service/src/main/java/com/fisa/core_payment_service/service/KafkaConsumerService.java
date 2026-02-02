@@ -1,6 +1,6 @@
 package com.fisa.core_payment_service.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException; // 예외 처리용 추가
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fisa.core_payment_service.dto.CouponIssueMessage;
 import com.fisa.core_payment_service.dto.DepositMessage;
