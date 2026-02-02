@@ -55,10 +55,10 @@ jobs:
           command_timeout: 30m
           script: |
             # Check if deployment exists
-            if kubectl get deployment coupon-service -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
+            if kubectl get deployment event-coupon-service -n ${{ env.NAMESPACE }} >/dev/null 2>&1; then
               echo "Deployment exists, updating image..."
-              kubectl set image deployment/coupon-service coupon-service=${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} -n ${{ env.NAMESPACE }}
-              kubectl rollout status deployment/coupon-service -n ${{ env.NAMESPACE }} --timeout=120s || (kubectl rollout undo deployment/coupon-service -n ${{ env.NAMESPACE }} && exit 1)
+              kubectl set image deployment/event-coupon-service event-coupon-service=${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} -n ${{ env.NAMESPACE }}
+              kubectl rollout status deployment/event-coupon-service -n ${{ env.NAMESPACE }} --timeout=120s || (kubectl rollout undo deployment/event-coupon-service -n ${{ env.NAMESPACE }} && exit 1)
             else
               echo "Deployment does not exist. Please create deployment first using k8s manifests."
               echo "Run: kubectl apply -f cloud-services/msa-coupon-service/k8s/"
