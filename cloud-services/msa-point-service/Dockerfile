@@ -1,5 +1,5 @@
 # 1. 자바 실행 환경(JRE) 선택
-FROM openjdk:17-jdk-slim
+FROM bellsoft/liberica-openjdk-debian:17
 
 # 2. 빌드된 jar 파일을 컨테이너 내부로 복사
 # Gradle 빌드 시 생성되는 파일 경로를 지정합니다.
