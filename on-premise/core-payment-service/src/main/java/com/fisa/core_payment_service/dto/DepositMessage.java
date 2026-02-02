@@ -6,10 +6,13 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Getter
-public class DepositMessage {
 
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class DepositMessage {
     private String userUuid;
-    private String accountNumber;
+    private String accountNo;
     private BigDecimal amount;
 }
