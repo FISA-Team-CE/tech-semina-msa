@@ -1,0 +1,99 @@
+name: Deploy On-Premise Services
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'on-premise/**'
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  deploy-user-service:
+    name: Deploy User Service
+    runs-on: self-hosted
+    if: contains(github.event.head_commit.modified, 'on-premise/core-user-service') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x on-premise/core-user-service/gradlew
+      
+      - name: Build JAR
+        run: |
+          cd on-premise/core-user-service
+          ./gradlew clean build -x test
+      
+      - name: Deploy JAR
+        run: |
+          SERVICE_NAME="core-user-service"
+          JAR_FILE=$(ls on-premise/core-user-service/build/libs/*.jar | head -n 1)
+          
+          echo "Deploying ${JAR_FILE}..."
+          sudo cp ${JAR_FILE} /opt/${SERVICE_NAME}/${SERVICE_NAME}.jar
+          
+      - name: Restart Service
+        run: |
+          sudo systemctl restart core-user-service
+          sleep 3
+          sudo systemctl status core-user-service --no-pager
+      
+      - name: Health Check
+        run: |
+          echo "Waiting for service to start..."
+          sleep 5
+          
+          # 헬스체크 (포트는 실제 서비스 포트로 수정)
+          curl -f http://localhost:8080/actuator/health || echo "Health check failed"
+
+  deploy-payment-service:
+    name: Deploy Payment Service
+    runs-on: self-hosted
+    if: contains(github.event.head_commit.modified, 'on-premise/core-payment-service') || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x on-premise/core-payment-service/gradlew
+      
+      - name: Build JAR
+        run: |
+          cd on-premise/core-payment-service
+          ./gradlew clean build -x test
+      
+      - name: Deploy JAR
+        run: |
+          SERVICE_NAME="core-payment-service"
+          JAR_FILE=$(ls on-premise/core-payment-service/build/libs/*.jar | head -n 1)
+          
+          echo "Deploying ${JAR_FILE}..."
+          sudo cp ${JAR_FILE} /opt/${SERVICE_NAME}/${SERVICE_NAME}.jar
+          
+      - name: Restart Service
+        run: |
+          sudo systemctl restart core-payment-service
+          sleep 3
+          sudo systemctl status core-payment-service --no-pager
+      
+      - name: Health Check
+        run: |
+          echo "Waiting for service to start..."
+          sleep 5
+          
+          # 헬스체크 (포트는 실제 서비스 포트로 수정)
+          curl -f http://localhost:8081/actuator/health || echo "Health check failed"
