@@ -76,7 +76,7 @@ public class PointService {
      * - 히스토리 저장 추가
      */
     public void refund(String userId, Long amount) {
-        PointMaster wallet = pointRepository.findByUserUuid(userId)
+        PointMaster wallet = pointRepository.findByUserUuidWithLock(userId)
                 .orElseThrow(() -> new RuntimeException("지갑 없음"));
 
         // 1. 다시 돈 채워주기 (refund 메서드가 없다면 charge 사용 가능)

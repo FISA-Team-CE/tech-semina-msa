@@ -35,6 +35,9 @@ public class PointMaster {
 
     // [로직 1] 포인트 충전 (합산)
     public void charge(long amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
+        }
         this.currentAmt += amount;
         this.lastUpdatedAt = LocalDateTime.now();
     }
@@ -51,6 +54,9 @@ public class PointMaster {
 
     // [로직 3] 포인트 롤백(환불)
     public void refund(long amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("환불 금액은 0보다 커야 합나다.");
+        }
         this.currentAmt += amount;
         this.lastUpdatedAt = LocalDateTime.now();
     }

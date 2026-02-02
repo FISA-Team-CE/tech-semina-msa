@@ -24,7 +24,7 @@ public interface PointMasterRepository extends JpaRepository<PointMaster, Long> 
      * - 동시성 문제 해결의 핵심입니다.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "3000")}) // 3초 대기 후 에러
+    @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")}) // 3초 대기 후 에러
     @Query("select p from PointMaster p where p.userUuid = :userUuid") // 👈 직접 쿼리 명시
     Optional<PointMaster> findByUserUuidWithLock(String userUuid);
     // (JPA가 메서드 이름을 분석할 때 'AndLock'은 무시하므로 기능은 똑같이 동작하고 락만 걸립니다)

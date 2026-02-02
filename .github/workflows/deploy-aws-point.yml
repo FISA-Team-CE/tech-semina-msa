@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'msa-point-service/**' # ⭐️ 핵심: msa-point 폴더 내 변경이 있을 때만 작동
+      - 'cloud-services/msa-point-service/**' # ⭐️ 핵심: msa-point 폴더 내 변경이 있을 때만 작동
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/msa-point-service
@@ -30,7 +30,7 @@ jobs:
 
       # ⭐️ 루트의 gradlew를 사용하되, point 서비스만 빌드
       - name: Build Point Service
-        run: ./gradlew :msa-point-service:clean :msa-point-service:build -x test
+        run: ./gradlew :cloud-services:msa-point-service:clean :cloud-services:msa-point-service:build -x test
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -40,7 +40,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} ./msa-point-service
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} ./cloud-services/msa-point-service
           docker push ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
 
       - name: Deploy to K8s via SSH
@@ -51,4 +51,4 @@ jobs:
           key: ${{ secrets.K8S_MASTER_KEY }}
           script: |
             kubectl set image deployment/msa-point-service msa-point=${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} -n ${{ env.NAMESPACE }}
-            kubectl rollout status deployment/msa-point-service -n ${{ env.NAMESPACE }}
+            kubectl rollout status deployment/msa-point-service -n ${{ env.NAMESPACE }} --timeout=120s || (kubectl rollout undo deployment/msa-point-service -n ${{ env.NAMESPACE }} && exit 1)

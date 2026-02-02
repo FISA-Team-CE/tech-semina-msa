@@ -38,8 +38,8 @@ projectJDK: "17" #(Applied in CI/CD pipeline)
 # Code Coverage is available in Ultimate and Ultimate Plus plans
 #failureConditions:
 #  severityThresholds:
-#    any: 15
-#    critical: 5
+#    any: 50
+#    critical: 0
 #  testCoverageThresholds:
 #    fresh: 70
 #    total: 50
