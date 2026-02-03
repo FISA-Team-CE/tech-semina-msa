@@ -1,0 +1,23 @@
+2026-02-03 14:34:25,751 INFO o.a.j.u.JMeterUtils: Setting Locale to en_EN
+2026-02-03 14:34:25,776 INFO o.a.j.JMeter: Loading user properties from: C:\Users\ryu\Desktop\apache-jmeter\bin\user.properties
+2026-02-03 14:34:25,778 INFO o.a.j.JMeter: Loading system properties from: C:\Users\ryu\Desktop\apache-jmeter\bin\system.properties
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: Copyright (c) 1998-2024 The Apache Software Foundation
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: Version 5.6.3
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: java.version=17
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: java.vm.name=OpenJDK 64-Bit Server VM
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: os.name=Windows 10
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: os.arch=amd64
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: os.version=10.0
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: file.encoding=MS949
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: java.awt.headless=null
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: Max memory     =1073741824
+2026-02-03 14:34:25,787 INFO o.a.j.JMeter: Available Processors =16
+2026-02-03 14:34:25,797 INFO o.a.j.JMeter: Default Locale=English (EN)
+2026-02-03 14:34:25,797 INFO o.a.j.JMeter: JMeter  Locale=English (EN)
+2026-02-03 14:34:25,798 INFO o.a.j.JMeter: JMeterHome=C:\Users\ryu\Desktop\apache-jmeter
+2026-02-03 14:34:25,798 INFO o.a.j.JMeter: user.dir  =C:\Users\ryu\workspace\tech-semina-msa
+2026-02-03 14:34:25,798 INFO o.a.j.JMeter: PWD       =C:\Users\ryu\workspace\tech-semina-msa
+2026-02-03 14:34:25,802 INFO o.a.j.JMeter: IP: 192.168.0.79 Name: DESKTOP-CHOFOT9 FullName: DESKTOP-CHOFOT9
+2026-02-03 14:34:25,818 INFO o.a.j.JMeter: Loaded icon properties from org/apache/jmeter/images/icon.properties
+2026-02-03 14:34:26,067 INFO o.a.j.JMeterGuiLauncher: Setting LAF to: com.github.weisj.darklaf.DarkLaf:com.github.weisj.darklaf.theme.DarculaTheme
+2026-02-03 14:34:36,043 INFO o.a.j.s.FileServer: Default base='C:\Users\ryu\workspace\tech-semina-msa'
