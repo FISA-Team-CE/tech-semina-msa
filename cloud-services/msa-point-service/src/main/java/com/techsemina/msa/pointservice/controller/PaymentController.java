@@ -33,14 +33,14 @@ public class PaymentController {
         // 2. ID가 채워진 dto를 서비스로 넘김 (Kafka로 메시지 던지고 바로 리턴)
         paymentService.processCompositePayment(dto);
 
-        // 2. 응답 객체 생성
+        // 3. 응답 객체 생성
         PaymentResponse response = PaymentResponse.builder()
                 .message("결제 요청이 정상적으로 접수되었습니다. (결과 알림 예정)")
                 .orderId(dto.getOrderId())
                 .status("PENDING")         // 아직 Kafka 타고 가는 중 - PENDING
                 .build();
 
-        // 3. 202 Accepted 리턴
+        // 4. 202 Accepted 리턴
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 }

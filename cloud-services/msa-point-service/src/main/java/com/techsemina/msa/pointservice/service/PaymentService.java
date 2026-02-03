@@ -10,6 +10,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -51,7 +53,12 @@ public class PaymentService {
         // 2. 보내기 전에 로그 확인
         log.info("-> [Kafka 전송] 토픽: core-withdraw-request, 데이터: {}", cashMessage);
         // 3. 전송
-        kafkaTemplate.send("core-withdraw-request", cashMessage);
+        try {
+            kafkaTemplate.send("core-withdraw-request", cashMessage).get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Kafka 전송 실패: {}", e.getMessage());
+            throw new RuntimeException("출금 요청 전송 실패", e);
+        }
 
         log.info("=== 2. 결제 요청 접수 완료 (결과는 비동기 처리) ⏳ ===");
     }
@@ -62,6 +69,11 @@ public class PaymentService {
     public void completePayment(String orderId) {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("주문 없음"));
+
+        if (!"PENDING".equals(payment.getStatus())) {
+            log.warn("⚠️ 이미 처리된 주문입니다: orderId={}, status={}", orderId, payment.getStatus());
+            return;
+        }
 
         payment.setStatus("COMPLETED");
         log.info("🎉 최종 결제 완료 처리됨: {}", orderId);

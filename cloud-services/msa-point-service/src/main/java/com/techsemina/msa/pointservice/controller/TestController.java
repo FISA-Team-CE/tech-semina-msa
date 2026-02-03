@@ -1,6 +1,6 @@
 package com.techsemina.msa.pointservice.controller;
+import org.springframework.context.annotation.Profile;
 
-package com.techsemina.msa.pointservice.controller;
 
 import com.techsemina.msa.pointservice.dto.CashResponseDTO;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/test")
 @RequiredArgsConstructor
+@Profile({"dev", "test"})  // 운영 환경에서는 비활성화
 public class TestController {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
