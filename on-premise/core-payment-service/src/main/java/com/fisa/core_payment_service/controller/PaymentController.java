@@ -2,6 +2,7 @@ package com.fisa.core_payment_service.controller;
 
 import com.fisa.core_payment_service.dto.AmountRequestDto;
 import com.fisa.core_payment_service.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +30,7 @@ public class PaymentController {
 
     // 입금
     @PostMapping("/accounts/{accountNo}/deposit")
-    public BigDecimal deposit(@PathVariable String accountNo, @RequestBody AmountRequestDto request) {
+    public BigDecimal deposit(@PathVariable String accountNo, @Valid @RequestBody AmountRequestDto request) {
         return paymentService.deposit(accountNo, request.userUuid(), request.amount());
     }
 
