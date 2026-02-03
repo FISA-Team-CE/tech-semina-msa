@@ -1,41 +1,98 @@
 package com.techsemina.msa.pointservice.service;
 
+import com.techsemina.msa.pointservice.domain.Payment;
 import com.techsemina.msa.pointservice.dto.CashRequestDTO;
 import com.techsemina.msa.pointservice.dto.PaymentRequest;
+import com.techsemina.msa.pointservice.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
 
-    // 1. 이제 API Client 대신, 옆자리 동료(Service)와 우체부(Kafka)를 사용
+    // 1. Service + kafka 사용
     private final PointService pointService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final PaymentRepository paymentRepository;
 
     @Transactional // 포인트 차감 중 에러나면 자동 롤백 보장
     public void processCompositePayment(PaymentRequest request) {
         log.info("=== 1. 복합 결제 시작 (Hybrid): User={} ===", request.getLoginId());
 
-        // [Step 1] 포인트 차감 (Local Logic)
-        // -> 같은 프로젝트라 네트워크를 안 타므로 try-catch가 굳이 필요 없음
-        // -> 실패하면 RuntimeException이 터지면서 트랜잭션이 전체 롤백됨
-        log.info("-> [Local] 포인트 서비스 직접 호출: {}점 차감", request.getPointAmount());
+        // [Step 0] 장부에 먼저 "결제 대기중(PENDING)"으로 적어놓기
+        Payment newPayment = Payment.builder()
+                .orderId(request.getOrderId())
+                .userId(request.getLoginId())
+                .pointAmount(request.getPointAmount())
+                .cashAmount(request.getCashAmount())
+                .status("PENDING") // 대기중
+                .build();
+
+        paymentRepository.save(newPayment); // DB 저장 (INSERT)
+        log.info("-> 결제 내역 저장 완료 (PENDING) ✅");
+
+        // [Step 1] 포인트 차감
         pointService.usePoint(request.getLoginId(), request.getPointAmount());
-        log.info("-> 포인트 차감 완료 (DB 반영됨) ✅");
+        log.info("-> 포인트 차감 완료 ✅");
 
-        // [Step 2] 현금 출금 요청 (Async Kafka)
-        // -> 핵심 변경점: 결과를 기다리지(Block) 않고 쪽지만 보냄
-        // -> 따라서 여기서 '실패 시 롤백' 코드를 짤 필요가 없음 (Consumer가 할 일)
-        log.info("-> [Remote] 코어뱅킹 출금 요청 전송 (Kafka)");
-        kafkaTemplate.send("core-withdraw-request",
-                new CashRequestDTO(request.getLoginId(), request.getCashAmount()));
 
-        // 사용자는 여기서 즉시 응답을 받습니다. (대기 시간 0초)
+        // [Step 2] 현금 출금 요청 (Kafka)
+        // 1. 변수에 먼저 담습니다.
+        CashRequestDTO cashMessage = new CashRequestDTO(
+                request.getOrderId(),
+                request.getLoginId(),
+                request.getCashAmount()
+        );
+        // 2. 보내기 전에 로그 확인
+        log.info("-> [Kafka 전송] 토픽: core-withdraw-request, 데이터: {}", cashMessage);
+        // 3. 전송
+        try {
+            kafkaTemplate.send("core-withdraw-request", cashMessage).get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.error("Kafka 전송 실패: {}", e.getMessage());
+            throw new RuntimeException("출금 요청 전송 실패", e);
+        }
+
         log.info("=== 2. 결제 요청 접수 완료 (결과는 비동기 처리) ⏳ ===");
     }
+
+
+    // ✅ 결제 성공 확정 (Commit)
+    @Transactional
+    public void completePayment(String orderId) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("주문 없음"));
+
+        if (!"PENDING".equals(payment.getStatus())) {
+            log.warn("⚠️ 이미 처리된 주문입니다: orderId={}, status={}", orderId, payment.getStatus());
+            return;
+        }
+
+        payment.setStatus("COMPLETED");
+        log.info("🎉 최종 결제 완료 처리됨: {}", orderId);
+    }
+
+    // ✅ [추가 2] 결제 실패 보상 (Rollback/Refund)
+    @Transactional
+    public void compensatePayment(String orderId) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("주문 없음"));
+
+        // 이미 취소된 건지 체크하는 로직 등이 여기 들어가면 안전함
+        if ("FAILED".equals(payment.getStatus())) return;
+
+        // 포인트 환불 로직
+        pointService.refundPoint(payment.getUserId(), payment.getPointAmount());
+
+        payment.setStatus("FAILED");
+        log.info("🚨 보상 트랜잭션(환불) 완료: {}", orderId);
+    }
+
 }

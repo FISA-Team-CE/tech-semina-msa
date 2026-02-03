@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PointRequestDTO {
     private String loginId;
-    private Long pointAmount; // 포인트 차감/환불 액수
+    private Long pointAmount; // 포인트 충전/차감/환불 액수
 }
