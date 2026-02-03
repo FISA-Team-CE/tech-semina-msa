@@ -10,7 +10,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class CashRequestDTO {
-    private String orderId; // 트랜잭션 ID (Saga 추적용)
-    private String loginId; // 사용자 식별자 (userUuid)
+    private String loginId; // 사용자 식별자
     private Long amount;    // 출금액
 }
