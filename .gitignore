@@ -50,3 +50,8 @@ docker-compose.yml
 **/k8s/configmap-secret.yaml
 **/k8s/*-secret.yaml
 **/k8s/secrets/
+
+# JMeter
+jmeter.log
+*.jtl
+*.csv
