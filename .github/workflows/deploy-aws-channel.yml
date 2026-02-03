@@ -18,52 +18,57 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: "17"
-        distribution: "temurin"
-        cache: gradle
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: gradle
 
-    - name: Grant execute permission for gradlew
-      working-directory: cloud-services/msa-channel-user-service
-      run: chmod +x ./gradlew
+      - name: Grant execute permission for gradlew
+        working-directory: cloud-services/msa-channel-user-service
+        run: chmod +x ./gradlew
 
-    - name: Build Channel User Service
-      working-directory: cloud-services/msa-channel-user-service
-      run: ./gradlew clean build -x test
+      - name: Build Channel User Service
+        working-directory: cloud-services/msa-channel-user-service
+        run: ./gradlew clean build -x test
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push Docker image
-      run: |
-        docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} ./cloud-services/msa-channel-user-service
-        docker push ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} ./cloud-services/msa-channel-user-service
+          docker push ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
 
+      # -----------------------------
+      # Kubernetes rolling update
+      # -----------------------------
+      - name: Deploy to Kubernetes
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          VERSION: ${{ env.VERSION }}
+          NAMESPACE: ${{ env.NAMESPACE }}
+          DEPLOYMENT_NAME: ${{ env.DEPLOYMENT_NAME }}
+          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+        with:
+          host: ${{ secrets.K8S_MASTER_IP }}
+          username: ubuntu
+          key: ${{ secrets.K8S_MASTER_KEY }}
+          timeout: 60s
+          command_timeout: 30m
+          script: |
+            set -e
+            echo "NS=$NAMESPACE DEPLOY=$DEPLOYMENT_NAME CONTAINER=$CONTAINER_NAME IMAGE=$DOCKER_IMAGE:$VERSION"
 
-    # -----------------------------
-    # Kubernetes rolling update
-    # -----------------------------
-    - name: Deploy to Kubernetes
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.K8S_MASTER_IP }}
-        username: ubuntu
-        key: ${{ secrets.K8S_MASTER_KEY }}
-        timeout: 60s
-        command_timeout: 30m
-        script: |
-          set -e
+            kubectl -n "$NAMESPACE" set image "deployment/$DEPLOYMENT_NAME" \
+              "$CONTAINER_NAME=$DOCKER_IMAGE:$VERSION"
 
-          kubectl set image deployment/$DEPLOYMENT_NAME \
-            $CONTAINER_NAME=$DOCKER_IMAGE:$VERSION \
-            -n $NAMESPACE
-
-          kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
+            kubectl -n "$NAMESPACE" rollout status "deployment/$DEPLOYMENT_NAME"
