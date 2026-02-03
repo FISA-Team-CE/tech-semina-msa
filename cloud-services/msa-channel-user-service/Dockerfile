@@ -1,5 +1,5 @@
 # Multi-stage build for optimal image size
-FROM gradle:8.5-jdk17 AS builder
+FROM gradle:8.14.3-jdk17 AS builder
 
 WORKDIR /app
 
