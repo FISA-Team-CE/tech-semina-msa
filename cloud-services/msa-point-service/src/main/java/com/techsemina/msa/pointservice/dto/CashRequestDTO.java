@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CashRequestDTO {
+    private String orderId;
     private String loginId;
     private Long amount; // 출금 액수
 }

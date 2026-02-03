@@ -17,14 +17,14 @@ import java.util.Map;
 @Configuration
 public class KafkaProducerConfig {
 
-    @Value("${spring.kafka.bootstrap-servers}") // properties 값 가져오기
+    @Value("${spring.kafka.bootstrap-servers}") // application.properties 값 가져오기
     private String bootstrapServers;
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
 
-        // 카프카 브로커 주소 (application.yml에 있어도 여기서 명시하면 더 확실함)
+        // 카프카 브로커 주소 (application.yml에 있어도 여기서 명시하면 더 확실)
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
         // Key는 String, Value는 JSON(Object)으로 직렬화하겠다 설정
@@ -34,7 +34,7 @@ public class KafkaProducerConfig {
         // 메시지 전송 신뢰성 설정
         configProps.put(ProducerConfig.ACKS_CONFIG, "all"); // 모든 replica 확인
         configProps.put(ProducerConfig.RETRIES_CONFIG, 3);  // 재시도 횟수
-         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true); // 중복 전송 방지
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true); // 중복 전송 방지
 
         return new DefaultKafkaProducerFactory<>(configProps);
     }

@@ -25,7 +25,7 @@ public class PaymentKafkaConsumer {
             // --- Step 3: 포인트 롤백 (보상 트랜잭션) ---
             // 🔥 핵심: Kafka 안 쓰고 직접 서비스 호출해서 롤백!
             try {
-                pointService.refund(event.getUserId(), 5000L); // 금액은 예시
+                pointService.refundPoint(event.getUserId(), 5000L); // 금액은 예시
                 log.info("✅ 포인트 환불(롤백) 완료. 결제가 취소되었습니다.");
             } catch (Exception e) {
                 log.error("💀 큰일 났다... 환불마저 실패함. (관리자 호출 필요)");
