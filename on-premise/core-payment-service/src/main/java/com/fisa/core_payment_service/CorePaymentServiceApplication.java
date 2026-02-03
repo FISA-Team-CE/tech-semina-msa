@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.EnableKafka;
 
 @EnableKafka
+@EnableJpaAuditing
 @SpringBootApplication
 public class CorePaymentServiceApplication {
 
