@@ -56,7 +56,7 @@ public class KafkaConsumerService {
         try {
             // (1) 메시지 파싱
             requestDto = objectMapper.readValue(message, CashRequestDTO.class);
-            log.info("📉 [Core] 출금 요청 수신: {}", requestDto);
+            log.info("📉 [Core] 출금 요청 수신: loginId={}", requestDto.getLoginId());
 
             // (2) 계좌 조회
             Account account = accountRepository.findByUserUuid(requestDto.getLoginId())
@@ -71,8 +71,7 @@ public class KafkaConsumerService {
 
             // (4) 성공 이벤트 발행 -> PointService의 토픽 이름인 "core-result"로 변경
             CashResponseDTO successResponse = new CashResponseDTO(
-                    requestDto.getOrderId(),
-                    requestDto.getLoginId(), // ★ userUuid 추가 (PointService 환불용)
+                    requestDto.getLoginId(),
                     "SUCCESS",
                     "정상 출금 완료"
             );
@@ -89,8 +88,7 @@ public class KafkaConsumerService {
             if (requestDto != null) {
                 // (5) 실패 이벤트 발행
                 CashResponseDTO failResponse = new CashResponseDTO(
-                        requestDto.getOrderId(),
-                        requestDto.getLoginId(), // ★ userUuid 추가
+                        requestDto.getLoginId(),
                         "FAIL",
                         e.getMessage()
                 );
