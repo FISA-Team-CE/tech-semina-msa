@@ -13,7 +13,7 @@ import jakarta.annotation.PostConstruct;
 public class MetricsConfig {
 
     private final MeterRegistry meterRegistry;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @PostConstruct
     public void registerCustomMetrics() {
@@ -30,7 +30,7 @@ public class MetricsConfig {
 
     private double getCouponStock() {
         try {
-            String count = (String) redisTemplate.opsForValue().get("coupon:count");
+            String count = redisTemplate.opsForValue().get("coupon:count");
             return count != null ? Double.parseDouble(count) : 0.0;
         } catch (Exception e) {
             return 0.0;

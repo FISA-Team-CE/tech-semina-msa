@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CouponRecoveryScheduler {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     private final CouponRepository couponRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -29,7 +29,7 @@ public class CouponRecoveryScheduler {
     public void recoverMissingCoupons() {
         // 1. Redis에 기록된 모든 당첨자 가져오기 (시연 규모가 작다면 SMEMBERS 사용 가능)
         // 주의: 당첨자가 수백만 명이라면 SCAN 명령어를 써야 하지만, 시연용(100~1000명)은 이걸로 충분합니다.
-        Set<Object> redisUsers = redisTemplate.opsForSet().members(COUPON_USER_SET_KEY);
+        Set<String> redisUsers = redisTemplate.opsForSet().members(COUPON_USER_SET_KEY);
 
         if (redisUsers == null || redisUsers.isEmpty()) {
             return;
@@ -37,9 +37,7 @@ public class CouponRecoveryScheduler {
 
         log.info("누락된 쿠폰이 있는지 점검 시작. 대상 유저 수: {}", redisUsers.size());
 
-        for (Object userObj : redisUsers) {
-            String userUuid = (String) userObj;
-
+        for (String userUuid : redisUsers) {
             // 2. DB에 실제로 저장되어 있는지 확인
             boolean exists = couponRepository.existsByUserUuid(userUuid);
 

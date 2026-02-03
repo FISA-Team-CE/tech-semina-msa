@@ -31,6 +31,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.kafka:spring-kafka'
 	
+	// Redis Connection Pool (트래픽 대응)
+	implementation 'org.apache.commons:commons-pool2'
+	
 	// Prometheus 메트릭 (모니터링)
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	
