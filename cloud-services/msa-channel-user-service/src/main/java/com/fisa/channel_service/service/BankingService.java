@@ -20,7 +20,7 @@ public class BankingService {
     }
 
     // 입금
-    public void deposit(String userUuid, String accountNo, BigDecimal amount) {
+    public BigDecimal deposit(String userUuid, String accountNo, BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                        throw new IllegalArgumentException("입금 금액은 0보다 커야 합니다.");
         }
@@ -28,6 +28,7 @@ public class BankingService {
         DepositMessage message = new DepositMessage(userUuid, accountNo, amount);
         try {
             kafkaProducerService.sendDepositRequest(message);
+            return amount;
         } catch (Exception e) {
             throw new RuntimeException("입금 요청 전송 실패", e);
         }
