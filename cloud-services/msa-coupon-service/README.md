@@ -5,3 +5,4 @@
 ## 배포 정보
 - Deployment: event-coupon-service
 - Namespace: default
+- Port: 8082
