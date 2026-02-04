@@ -5,7 +5,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'cloud-services/msa-point-service/**' # ⭐️ 핵심: msa-point 폴더 내 변경이 있을 때만 작동
+      - 'cloud-services/msa-point-service/**' # ⭐️ msa-point 폴더 내 변경이 있을 때만 작동
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/msa-point-service
