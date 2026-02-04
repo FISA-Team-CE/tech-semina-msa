@@ -44,7 +44,7 @@ public class PaymentService {
 
 
         // [Step 2] 현금 출금 요청 (Kafka)
-        // 1. 변수에 먼저 담습니다.
+        // 1. 변수에 담음
         CashRequestDTO cashMessage = new CashRequestDTO(
                 request.getOrderId(),
                 request.getLoginId(),
@@ -54,7 +54,8 @@ public class PaymentService {
         log.info("-> [Kafka 전송] 토픽: core-withdraw-request, 데이터: {}", cashMessage);
         // 3. 전송
         try {
-            kafkaTemplate.send("core-withdraw-request", cashMessage).get(5, TimeUnit.SECONDS);
+            // ❌ .get()으로 기다리지 말기! 트랜잭션 길어짐. 비동기로 보내기
+            kafkaTemplate.send("core-withdraw-request", cashMessage);
         } catch (Exception e) {
             log.error("Kafka 전송 실패: {}", e.getMessage());
             throw new RuntimeException("출금 요청 전송 실패", e);
@@ -85,8 +86,13 @@ public class PaymentService {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("주문 없음"));
 
-        // 이미 취소된 건지 체크하는 로직 등이 여기 들어가면 안전함
-        if ("FAILED".equals(payment.getStatus())) return;
+        // 🚨 [핵심 수정]
+        // 기존: if ("FAILED".equals(payment.getStatus())) return;
+        // 수정: "PENDING(진행중)" 상태가 아니라면(이미 성공했거나 실패했으면) 건드리지 마라!
+        if (!"PENDING".equals(payment.getStatus())) {
+            log.warn("🚫 이미 처리가 완료된 주문입니다. (상태: {}) - 환불 중단", payment.getStatus());
+            return;
+        }
 
         // 포인트 환불 로직
         pointService.refundPoint(payment.getUserId(), payment.getPointAmount());
