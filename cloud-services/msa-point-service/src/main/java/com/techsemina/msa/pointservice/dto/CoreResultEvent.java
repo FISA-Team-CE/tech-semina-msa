@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CoreResultEvent {
+    private String orderId;
     private String userId;
     private String status; // "SUCCESS" 또는 "FAIL"
 }
