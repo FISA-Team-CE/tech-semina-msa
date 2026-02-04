@@ -31,8 +31,8 @@ repositories {
 }
 
 ext {
-    // Spring Cloud 2025.1.0 -> 2025.0.0
-    set('springCloudVersion', "2025.0.0")
+    // Spring Cloud 2025.1.0 -> 2025.0.0 ->2025.0.1
+    set('springCloudVersion', "2025.0.1")
 }
 
 dependencies {
