@@ -13,24 +13,32 @@
 <br>
 
 ## ⚙️ 기술 스택
-![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white) <br>
-![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
-![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-000?style=for-the-badge&logo=apachekafka)
-![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)
-![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white) 
-![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white) <br>
-![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)
-![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
-![Tailscale](https://img.shields.io/badge/Tailscale-000000?style=for-the-badge) <br>
-![Notion](https://img.shields.io/badge/Notion-%23000000.svg?style=for-the-badge&logo=notion&logoColor=white)
-![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
-![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
+- Language : Java 17
+- Framework : Spring Boot 3.5.10, Spring Cloud 2025
+- Database : PostgreSQL 15, Oracle XE 21, MySQL 8.0
+- Message Broker : Apache Kakfa
+- Cache : Redis
+- Monitoring : Grafana, Prometheus, Zipkin
+- Container : Docker, Kubernetes
+- Build : Gradle
 
 <br>
- 
+
+## 📁 프로젝트 구조
+```
+  tech-semina-msa/
+  ├── on-premise/                      # 온프레미스 서비스 (폐쇄망)
+  │   ├── core-user-service/           # 사용자 관리 (PostgreSQL)
+  │   └── core-payment-service/        # 결제 처리 (Oracle DB)
+  ├── cloud-services/                  # 클라우드 마이크로서비스
+  │   ├── msa-coupon-service/          # 쿠폰 발급 (MySQL, Redis, Kafka)
+  │   ├── msa-point-service/           # 포인트 관리 (MySQL)
+  │   └── msa-channel-user-service/    # 채널별 사용자 관리 (MySQL)
+  ├── docker-compose.yml               # 개발 환경 인프라
+  ├── DEPLOYMENT_GUIDE.md              # K8s 배포 가이드
+  └── LOCAL_TEST_GUIDE.md              # 로컬 테스트 가이드
+```
+
 ## 📊 ERD
 <img width="1874" height="590" alt="image" src="https://github.com/user-attachments/assets/0d3f3592-df07-4395-8505-425223625bf2" />
 
@@ -51,6 +59,7 @@
 <br>
 
 ## 🍎 서비스별 기능
+<img width="480" height="720" alt="image" src="https://github.com/user-attachments/assets/d36855c2-f3eb-40bd-9a89-244c3bee7efd" />
 
 ### 1️⃣ Core User Service
 > 계정계 : 사용자 정보 관리
@@ -113,6 +122,45 @@
 
 **2. 보상 트랜잭션**
  > 분산 환경에서의 데이터 결과적 일관성 (Eventual Consistency) 보장
+ ```java
+  @Service
+  public class PaymentService {
+
+      @Transactional
+      public void processCompositePayment(PaymentRequest request) {
+          // Step 0: 결제 기록 생성 (PENDING)
+          Payment payment = Payment.builder()
+                  .orderId(request.getOrderId())
+                  .userId(request.getLoginId())
+                  .pointAmount(request.getPointAmount())
+                  .cashAmount(request.getCashAmount())
+                  .status("PENDING")
+                  .build();
+          paymentRepository.save(payment);
+
+          // Step 1: 포인트 차감
+          pointService.usePoint(request.getLoginId(), request.getPointAmount());
+
+          // Step 2: 현금 출금 요청 (비동기)
+          kafkaTemplate.send("core-withdraw-request", new CashRequestDTO(
+              request.getOrderId(),
+              request.getLoginId(),
+              request.getCashAmount()
+          ));
+      }
+
+      // 보상 트랜잭션: 출금 실패 시 포인트 환불
+      @Transactional
+      public void compensatePayment(String orderId) {
+          Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow();
+          if (!"PENDING".equals(payment.getStatus())) return;
+
+          // 포인트 환불
+          pointService.refundPoint(payment.getUserId(), payment.getPointAmount());
+          payment.setStatus("FAILED");
+      }
+  }
+ ```
  - Core Service로부터 payment_result: FAIL (잔액 부족) 이벤트를 수신 시, 즉시 롤백 로직 실행
  - 앞에서 차감한 포인트를 다시 더함
 
@@ -125,6 +173,28 @@
 > 채널계 : 트래픽 처리 및 쿠폰 관리
 
 **1. Lua Script 원자성**
+ ```java
+  -- KEYS[1]: coupon:users (Set)
+  -- KEYS[2]: coupon:count (String)
+  -- ARGV[1]: userUuid
+
+  -- 1. 이미 발급받은 사용자인지 확인
+  if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then
+      return -1  -- 이미 발급받음
+  end
+
+  -- 2. 재고 확인
+  local count = tonumber(redis.call('GET', KEYS[2]))
+  if count == nil or count <= 0 then
+      return -2  -- 재고 소진
+  end
+
+  -- 3. 원자적으로 발급 처리
+  redis.call('SADD', KEYS[1], ARGV[1])    -- 사용자 추가
+  redis.call('DECR', KEYS[2])              -- 재고 차감
+
+  return 1  -- 성공
+ ```
  - Single Redis Call : 중복 체크와 재고 차감을 하나의 Lua 스크립트로 묶어 원자적으로 실행
  - Race Condition 방지 : 다수의 동시 요청이 들어와도 정확한 쿠폰 개수만큼만 발급
 
@@ -138,12 +208,36 @@
  - 서버 다운 시점의 누락 쿠폰 자동 복구 효과
 
 <br>
+
+### 📳 서비스 간 통신 : kafka 토픽 구조
+
+```
+ coupon_issue                                                    
+  │  ├── Producer: core-payment-service, msa-coupon-service         
+  │  └── Consumer: msa-coupon-service                              
+  │                                                                  
+  │  bank_deposit                                                    
+  │  ├── Producer: 외부 시스템                                       
+  │  └── Consumer: core-payment-service                             
+  │                                                                  
+  │  core-withdraw-request                                           
+  │  ├── Producer: msa-point-service                                
+  │  └── Consumer: core-payment-service                             
+  │                                                                 
+  │  core-result                                                     
+  │  ├── Producer: core-payment-service                             
+  │  └── Consumer: msa-point-service
+ 
+```
+
+<br>
 <br>
 
 ## 🎬 다양한 MSA 시나리오
 ### 1️⃣ 부하테스트
 
 ### 2️⃣ 보상 트랜잭션: SAGA pattern
+<img width="520" height="500" alt="스크린샷 2026-02-05 오전 12 03 35" src="https://github.com/user-attachments/assets/3631a948-b8f4-4b9f-8ea5-5753f6f7ad6b" />
 
 <br>
 <br>
