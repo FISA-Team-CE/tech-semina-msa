@@ -71,6 +71,7 @@ public class KafkaConsumerService {
 
             // (4) 성공 이벤트 발행 -> PointService의 토픽 이름인 "core-result"로 변경
             CashResponseDTO successResponse = new CashResponseDTO(
+                    requestDto.getOrderId(),
                     requestDto.getLoginId(),
                     "SUCCESS",
                     "정상 출금 완료"
@@ -88,6 +89,7 @@ public class KafkaConsumerService {
             if (requestDto != null) {
                 // (5) 실패 이벤트 발행
                 CashResponseDTO failResponse = new CashResponseDTO(
+                        requestDto.getOrderId(),
                         requestDto.getLoginId(),
                         "FAIL",
                         e.getMessage()
