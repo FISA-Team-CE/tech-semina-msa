@@ -10,6 +10,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class CashRequestDTO {
+    private String orderId;
     private String loginId; // 사용자 식별자
     private Long amount;    // 출금액
 }

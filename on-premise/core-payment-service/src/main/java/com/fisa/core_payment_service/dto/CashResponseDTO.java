@@ -10,6 +10,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class CashResponseDTO {
+    private String orderId;  // 주문 식별자
     private String loginId;  // 사용자 식별자
     private String status;   // "SUCCESS" or "FAIL"
     private String message;
