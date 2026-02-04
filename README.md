@@ -109,7 +109,7 @@
 
  - 계좌 개설 : Core Payment Service에 계좌 생성 요청 (동기 REST 처리 방식 사용)
  - 입금 : Kafka를 통한 입금 요청 발행 (비동기 Event 처리 방식 사용)
- - 출금 : Feign Clien를 통해 Core Payment Service에 출금 요청 (동기 REST 처리 방식 사용)
+ - 출금 : Feign Client를 통해 Core Payment Service에 출금 요청 (동기 REST 처리 방식 사용)
 
 <br>
 
