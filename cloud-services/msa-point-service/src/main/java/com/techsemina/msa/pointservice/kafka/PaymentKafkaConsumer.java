@@ -1,35 +1,65 @@
 package com.techsemina.msa.pointservice.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.techsemina.msa.pointservice.domain.Payment;
+import com.techsemina.msa.pointservice.dto.CashResponseDTO;
 import com.techsemina.msa.pointservice.dto.CoreResultEvent;
+import com.techsemina.msa.pointservice.repository.PaymentRepository;
+import com.techsemina.msa.pointservice.service.PaymentService;
 import com.techsemina.msa.pointservice.service.PointService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentKafkaConsumer {
 
-    private final PointService pointService; // 직접 주입
+    private final PaymentService paymentService;
+    private final PaymentRepository paymentRepository;  // 장부 조회용
+    private final ObjectMapper objectMapper;
 
-    // 온프레미스(코어뱅킹)의 응답을 듣는 리스너
-    @KafkaListener(topics = "core-result", groupId = "payment-group")
-    public void handleCoreResult(CoreResultEvent event) {
-        if ("SUCCESS".equals(event.getStatus())) {
-            log.info("🎉 최종 결제 성공! (포인트 O, 현금 O)");
+    @KafkaListener(topics = "core-result", groupId = "point-service-group")
+    @Transactional  // 에러 발생 시 롤백 & 카프카 재시도
+    public void consumeWithdrawResult(String message) throws Exception {
+
+        log.info("📨 [Kafka] 결과 수신: {}", message);
+
+        // 1. DTO 변환
+        CashResponseDTO result = objectMapper.readValue(message, CashResponseDTO.class);
+
+        // 2. 성공 여부 체크
+        if ("SUCCESS".equals(result.getStatus())) {
+            // ✅ 성공 시: 서비스의 완료 로직 호출
+            paymentService.completePayment(result.getOrderId());
         } else {
-            log.error("🚨 온프레미스 출금 실패! -> [보상 트랜잭션] 포인트 환불 진행");
+            // ❌ 실패 시: 롤백(환불) 로직 진행
+            log.warn("🚨 결제 실패 수신 (사유: {}). 환불을 진행합니다.", result.getMessage());
 
-            // --- Step 3: 포인트 롤백 (보상 트랜잭션) ---
-            // 🔥 핵심: Kafka 안 쓰고 직접 서비스 호출해서 롤백!
-            try {
-                pointService.refundPoint(event.getUserId(), 5000L); // 금액은 예시
-                log.info("✅ 포인트 환불(롤백) 완료. 결제가 취소되었습니다.");
-            } catch (Exception e) {
-                log.error("💀 큰일 났다... 환불마저 실패함. (관리자 호출 필요)");
+            // (1) 장부(DB)에서 주문 조회 (orderId로 찾기!)
+            Payment payment = paymentRepository.findByOrderId(result.getOrderId())
+                    .orElseThrow(() -> new RuntimeException("주문 정보를 찾을 수 없습니다."));
+
+            // (2) 이미 처리된 건인지 확인 (중복 방지)
+            if ("FAILED".equals(payment.getStatus())) {
+                log.info("이미 처리된 환불 건입니다.");
+                return;
             }
+            // (3) 실제 사용했던 포인트 조회
+            Long usedPoint = payment.getPointAmount();
+
+            // (4) 포인트 환불
+            paymentService.compensatePayment(payment.getOrderId());
+
+            // (5) 장부 상태 업데이트 (FAILED)
+            payment.setStatus("FAILED");
+            paymentRepository.save(payment); // @Transactional 있으면 자동 저장됨 (Dirty Checking)
+
+            log.info("✅ 포인트 {}점 환불 완료.", usedPoint);
         }
+
     }
 }
