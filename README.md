@@ -258,10 +258,19 @@
  - 스레드 재사용을 통한 시스템 리소스 효율화
 
 4. 최종 결과
+ - 스레드 풀 적용
+ <img width="697" height="374" alt="적용" src="https://github.com/user-attachments/assets/c3a49a18-c829-4d46-a436-4fedfc937d12" />
+ <br/>
+ 
+ - 스레드 풀 미적용
+ <img width="697" height="374" alt="미적용" src="https://github.com/user-attachments/assets/570113e7-e42f-4e30-990a-edbd5aadf9ea" />
+ 
  <img width="697" height="374" alt="스크린샷 2026-02-04 오후 11 44 17" src="https://github.com/user-attachments/assets/39572335-02f1-4f6f-b3de-a8c9b318b36c" />
+
 
  - 평균 응답 속도 23배 향상 (3MS 달성)
  - 대규모 트래픽 상황에서도 안정적인 서비스 가능
+
 
 <br>
 
